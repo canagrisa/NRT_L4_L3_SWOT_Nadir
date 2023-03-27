@@ -4,7 +4,7 @@ import cartopy.feature as feature
 import numpy as np
 import matplotlib.pyplot as plt
 import shapefile as shp
-import seaborn as sns
+#import seaborn as sns
 import utils
 import os
 import pandas as pd
@@ -20,8 +20,8 @@ ccrs_land = feature.NaturalEarthFeature('physical', 'land', '10m',
                                         linewidth=0.2)
 
 # Define a the color palette for each sat
-colors = sns.color_palette("bright", len(utils.sats_dic))
-color_dic = dict(zip(list(utils.sats_dic.keys()), colors))
+# colors = sns.color_palette("bright", len(utils.sats_dic))
+# color_dic = dict(zip(list(utils.sats_dic.keys()), colors))
 
 
 def generate_figure(coords, fig_size=20, dpi=200):
