@@ -1,4 +1,5 @@
 code/loop_download.ipynb
 temp/
 figures/
+code/__pycache__/
 
