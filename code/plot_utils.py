@@ -3,9 +3,11 @@ import cartopy.crs as ccrs
 import cartopy.feature as feature
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import shapefile as shp
 #import seaborn as sns
 import utils
+import cmocean
 import os
 import pandas as pd
 from cartopy.mpl.ticker import (LongitudeFormatter, LatitudeFormatter,
@@ -84,24 +86,37 @@ def plot_date(ax, fig_size, day, month, year, x=1.115, y=0.98):
             fontsize=1.45*np.sqrt(fig_size))
 
 
-def plot_L4_field(datarray, ax, fig_size, cmap, vmin, vmax):
+def plot_L4_field(datarray, ax, fig_size, cmap, vmin, vmax, product):
 
     # Plot the L4 field
 
     fs = np.sqrt(fig_size)
 
-    nrt_l4 = datarray.plot.contourf(ax=ax,
-                                    add_colorbar=False,
-                                    cmap=cmap,
-                                    transform=ccrs.PlateCarree(),
-                                    linewidths=0.2*fs,
-                                    vmax=vmax,
-                                    vmin=vmin,
-                                    levels=15,
-                                    algorithm='mpl2005',
-                                    zorder=-3)
+    if product == 'altimetry':
+        nrt_l4 = datarray.plot.contourf(ax=ax,
+                                        add_colorbar=False,
+                                        cmap=cmap,
+                                        transform=ccrs.PlateCarree(),
+                                        linewidths=0.2*fs,
+                                        vmax=vmax,
+                                        vmin=vmin,
+                                        levels=15,
+                                        algorithm='mpl2005',
+                                        zorder=-3)
+
+
+    else:
+
+        nrt_l4 = datarray.plot(ax=ax,
+                                vmin=vmin, vmax=vmax,
+                                add_colorbar=False,
+                                cmap=cmap,
+                                transform=ccrs.PlateCarree(),
+                                zorder=-3)
 
     return nrt_l4
+
+    
 
 
 def plot_swot_orbit(ax, fig_size, lw=0.195, c='k', alpha=1):
@@ -345,8 +360,8 @@ def plot_along_track_sats(sat_dic,
 
     for sat in sat_dic:
 
-        if c == None:
-            c = color_dic[sat]
+        # if c == None:
+        #     c = color_dic[sat]
 
         if not isinstance(sat_dic[sat], dict):
             a = 1
@@ -417,7 +432,10 @@ def plot_cbar(im,
                    )
 
 
-def get_map(ds_nrt, swot, sat_dic, product, day, month, year, coords, dpi=250, save=True):
+def get_map(ds_nrt, swot, sat_dic,
+            product, day, month, year,
+            coords, vmin=None, vmax=None,
+            dpi=250, save=True):
 
     """
     Plot all data (L4, L3 and SWOT-nadir)
@@ -425,6 +443,10 @@ def get_map(ds_nrt, swot, sat_dic, product, day, month, year, coords, dpi=250, s
 
     vmax_l3, vmin_l3, vmax_l4, vmin_l4 = utils.get_min_max(
         ds_nrt, sat_dic, swot, product)
+    
+    if vmin != None and vmax != None:
+        vmin_l4 = vmin
+        vmax_l4 = vmax
 
     if product == 'altimetry':
         title = 'ADT and along track \u22A5 geostrophic velocities'
@@ -437,16 +459,16 @@ def get_map(ds_nrt, swot, sat_dic, product, day, month, year, coords, dpi=250, s
         title = 'SST and along track ADT and \u22A5 geostrophic velocities'
         cbar_label = 'SST ($^\circ \!$C)'
         cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
-        cmap_l4 = cmr.get_sub_cmap('coolwarm', 0.51, 1)
+        cmap_l4 = cmocean.cm.thermal
         arrow_color = 'c'
 
     elif product == 'chlorophyll':
+        ds_nrt = np.log(ds_nrt)
         title = 'CHL and along track ADT and \u22A5 geostrophic velocities'
-        cbar_label = 'CHL (mg m$^{-3}$)'
+        cbar_label = 'log(CHL)'
         cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
-        cmap_l4 = cmr.get_sub_cmap('summer', 0, 0.8)
+        cmap_l4 = cmocean.cm.haline
         arrow_color = 'r'
-        vmin_l4 = 0
 
     fig_size = 20
     fs = np.sqrt(fig_size)
@@ -472,7 +494,8 @@ def get_map(ds_nrt, swot, sat_dic, product, day, month, year, coords, dpi=250, s
                           fig_size,
                           cmap=cmap_l4,
                           vmin=vmin_l4,
-                          vmax=vmax_l4)
+                          vmax=vmax_l4,
+                          product=product)
 
     plot_swot_orbit(ax, fig_size, c='w')
 

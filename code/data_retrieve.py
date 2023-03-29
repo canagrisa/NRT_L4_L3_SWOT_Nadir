@@ -18,8 +18,8 @@ def download_nrt(username,
     Specifying the product argument, the user can choose between:
 
     - 'altimetry': Altimetric L4-NRT data (https://data.marine.copernicus.eu/product/SEALEVEL_EUR_PHY_L4_NRT_OBSERVATIONS_008_060/description)
-    - 'sst': SST L4-NRT data (https://data.marine.copernicus.eu/product/SST_MED_SST_L4_NRT_OBSERVATIONS_010_004/description)
-    - 'chlorophyll': Chlorophyll L4-NRT data (https://data.marine.copernicus.eu/product/OCEANCOLOUR_MED_BGC_L4_NRT_009_142/description)
+    - 'sst': SST L4-NRT data (https://data.marine.copernicus.eu/product/SST_MED_SST_L3S_NRT_OBSERVATIONS_010_012/description)
+    - 'chlorophyll': Chlorophyll L4-NRT data (https://data.marine.copernicus.eu/product/OCEANCOLOUR_MED_BGC_L3_NRT_009_141/description)
 
     """
 
@@ -47,16 +47,16 @@ def download_nrt(username,
         lat = 'latitude'
     if product == 'sst':
         print('Retrieving SST L4-NRT data for {}-{}-{}...'.format(year, month, day))
-        service_id = 'SST_MED_SST_L4_NRT_OBSERVATIONS_010_004'
-        product_id = 'SST_MED_SST_L4_NRT_OBSERVATIONS_010_004_c_V2'
+        service_id = 'SST_MED_SST_L3S_NRT_OBSERVATIONS_010_012'
+        product_id = 'SST_MED_SST_L3S_NRT_OBSERVATIONS_010_012_b'
         idx_i = 6
         idx_f = 8
         lon = 'lon'
         lat = 'lat'
     if product == 'chlorophyll':
         print('Retrieving chlorophyll L4-NRT data for {}-{}-{}...'.format(year, month, day))
-        service_id = 'OCEANCOLOUR_MED_BGC_L4_NRT_009_142'
-        product_id = 'cmems_obs-oc_med_bgc-plankton_nrt_l4-gapfree-multi-1km_P1D'
+        service_id = 'OCEANCOLOUR_MED_BGC_L3_NRT_009_141'
+        product_id = 'cmems_obs-oc_med_bgc-plankton_nrt_l3-olci-300m_P1D'
         idx_i = 6
         idx_f = 8
         lon = 'lon'
@@ -96,8 +96,8 @@ def download_nrt(username,
                           drop=True).isel(time=0)
 
             if product == 'sst':
-                ds['analysed_sst'] = ds['analysed_sst'] - 273.15
-                ds = ds['analysed_sst']
+                ds['sea_surface_temperature'] = ds['sea_surface_temperature'] - 273.15
+                ds = ds['sea_surface_temperature']
 
             elif product == 'chlorophyll':
                 ds = ds['CHL']
