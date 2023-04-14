@@ -61,6 +61,17 @@ def download_nrt(username,
         idx_f = 8
         lon = 'lon'
         lat = 'lat'
+    # if product == 'wind':
+    #     print('Retrieving wind L4-NRT data for {}-{}-{}...'.format(year, month, day))
+    #     service_id = 'WIND_GLO_PHY_L4_NRT_012_004'
+    #     product_id = 'cmems_obs-wind_glo_phy_nrt_l4_0.125deg_PT1H'
+    #     idx_i = -23
+    #     idx_f = -21
+    #     lon = 'lon'
+    #     lat = 'lat'
+
+
+        
     # Connect to the ftp server
     ftp = FTP('nrt.cmems-du.eu')
     ftp.login(user=username, passwd=password)
@@ -93,17 +104,27 @@ def download_nrt(username,
                           (ds[lon] < coords[1]) &
                           (ds[lat] > coords[2]) &
                           (ds[lat] < coords[3]),
-                          drop=True).isel(time=0)
+                          drop=True)
 
             if product == 'sst':
                 ds['sea_surface_temperature'] = ds['sea_surface_temperature'] - 273.15
                 ds = ds['sea_surface_temperature']
+                ds = ds.isel(time=0)
 
             elif product == 'chlorophyll':
                 ds = ds['CHL']
+                ds = ds.isel(time=0)
 
             elif product == 'altimetry':
                 ds = ds['adt']
+                ds = ds.isel(time=0)
+
+            elif product == 'wind':
+                selected_vars = ["eastward_stress",
+                                 "northward_stress",
+                                 'stress_curl']
+                ds = ds[selected_vars]
+                ds = ds.mean('time')
 
             return ds
 

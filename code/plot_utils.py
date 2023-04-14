@@ -92,7 +92,7 @@ def plot_L4_field(datarray, ax, fig_size, cmap, vmin, vmax, product):
 
     fs = np.sqrt(fig_size)
 
-    if product == 'altimetry':
+    if product == 'altimetry' or product == 'wind':
         nrt_l4 = datarray.plot.contourf(ax=ax,
                                         add_colorbar=False,
                                         cmap=cmap,
@@ -366,30 +366,35 @@ def plot_along_track_sats(sat_dic,
         if not isinstance(sat_dic[sat], dict):
             a = 1
 
-            im = plot_path(sat_dic[sat],
-                           ax,
-                           fig_size,
-                           i,
-                           vmin,
-                           vmax,
-                           c=c,
-                           cmap=cmap,
-                           plot_geov=plot_geov)
+            if len(sat_dic[sat].time)>4:
+
+                im = plot_path(sat_dic[sat],
+                            ax,
+                            fig_size,
+                            i,
+                            vmin,
+                            vmax,
+                            c=c,
+                            cmap=cmap,
+                            plot_geov=plot_geov)
 
         else:
             j = 0
             subindex = ['\u2081', '\u2082']
             for swath in sat_dic[sat]:
-                im = plot_path(sat_dic[sat][swath],
-                               ax,
-                               fig_size,
-                               i,
-                               vmin,
-                               vmax,
-                               c=c,
-                               two_swaths=subindex[j],
-                               cmap=cmap,
-                               plot_geov=plot_geov)
+
+                if len(sat_dic[sat][swath].time)>4:
+
+                    im = plot_path(sat_dic[sat][swath],
+                                ax,
+                                fig_size,
+                                i,
+                                vmin,
+                                vmax,
+                                c=c,
+                                two_swaths=subindex[j],
+                                cmap=cmap,
+                                plot_geov=plot_geov)
                 j += 1
 
         i += 1
@@ -470,6 +475,14 @@ def get_map(ds_nrt, swot, sat_dic,
         cmap_l4 = cmocean.cm.haline
         arrow_color = 'r'
 
+    # elif product == 'wind':
+    #     #ds_nrt  = ds_nrt['stress_curl']
+    #     title = 'Stress wind and along track ADT and \u22A5 geostrophic velocities'
+    #     cbar_label = ' '
+    #     cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
+    #     cmap_l4 = 'seismic'
+    #     arrow_color = 'r'
+
     fig_size = 20
     fs = np.sqrt(fig_size)
 
@@ -507,7 +520,7 @@ def get_map(ds_nrt, swot, sat_dic,
                  fontsize=1.5*fs)
 
     if save == True:
-        savepath = f'../figures/{product}/{day}_{month}_{year}.png'
+        savepath = f'../figures/{day}_{month}_{year}/{product}_{day}_{month}_{year}.png'
 
         dir_path = os.path.dirname(os.path.realpath(savepath))+'/'
         if not os.path.exists(dir_path):

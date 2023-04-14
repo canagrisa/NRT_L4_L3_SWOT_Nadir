@@ -158,6 +158,7 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
     max_vals_l3 = []
     min_vals_l3 = []
 
+
     for sat in sat_dic:
         if not isinstance(sat_dic[sat], dict):
             ds = sat_dic[sat]
@@ -169,13 +170,15 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
                 max_vals_l3.append(np.float32(ds['adt'].max()))
                 min_vals_l3.append(np.float32(ds['adt'].min()))
 
+
     max_vals_l3_swot = []
     min_vals_l3_swot = []
+
     if swot:
         if not isinstance(swot['SWOT'], dict):
             ds = swot['SWOT']
-            max_vals_l3_swot.append(np.float32(swot['SWOT'].max()))
-            min_vals_l3_swot.append(np.float32(swot['SWOT'].min()))
+            max_vals_l3_swot.append(np.float32(ds['adt'].max()))
+            min_vals_l3_swot.append(np.float32(ds['adt'].min()))
         else:
             for swath in swot['SWOT']:
                 ds = swot['SWOT'][swath]
@@ -183,6 +186,7 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
                 min_vals_l3_swot.append(np.float32(ds['adt'].min()))
 
     if product != 'altimetry':
+
         vmax_l4 = max(max_vals_l4)
         vmin_l4 = min(min_vals_l4)
 
@@ -195,9 +199,10 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
 
         return vmax_l3, vmin_l3, vmax_l4, vmin_l4
 
+    
     else:
-        max_vals = max_vals_l4 + max_vals_l3
-        min_vals = min_vals_l4 + min_vals_l3
+        max_vals = max_vals_l4 + max_vals_l3 + max_vals_l3_swot
+        min_vals = min_vals_l4 + min_vals_l3 + min_vals_l3_swot
 
         vmax = max(max_vals)
         vmin = min(min_vals)
