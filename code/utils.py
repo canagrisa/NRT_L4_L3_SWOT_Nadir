@@ -45,25 +45,30 @@ def geov(ds):
     lon_km = 111320*np.cos(lat_r)  # km - length of a degree of longitude (array)
 
     if lat[-1] > lat[0]:
-        sign = 1
+        sign_lat = 1
     else:
-        sign = -1
+        sign_lat = -1
+
+    if lon[-1] > lon[0]:
+        sign_lon = 1
+    else:
+        sign_lon = -1
 
     # Calculate the geostrophic velocity
     dadt = np.diff(adt)
     dlon = np.diff(lon) * lon_km[:-1]
     dlat = np.diff(lat) * lat_km
 
-    alfa = np.append(np.arctan(dlat/dlon), 0) + np.pi/2
+    alfa = - np.append(np.arctan(dlat/dlon), 0) 
 
     dl = np.sqrt(dlon**2 + dlat**2)
 
-    velVec = - sign * (g/f) * dadt / dl
+    velVec = + sign_lon * sign_lat * (g/f) * dadt / dl
 
     velVec = np.append(velVec, 0)
 
-    vx = velVec * np.cos(alfa)
-    vy = velVec * np.sin(alfa)
+    vx = velVec * np.sin(alfa) * sign_lat 
+    vy = velVec * np.cos(alfa) * sign_lat
 
     ds = ds.assign(geov=(['time'], velVec))
     ds = ds.assign(geovx=(['time'], vx))
@@ -149,8 +154,15 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
     max_vals_l4 = []
     min_vals_l4 = []
 
-    l4_max = np.float32(ds_nrt.max())
-    l4_min = np.float32(ds_nrt.min())
+    if product == 'velocity':
+
+        ds_vel = np.sqrt((ds_nrt['ugosa']*100)**2 +  (ds_nrt['vgosa']*100)**2)
+        l4_max = np.float32(ds_vel.max())
+        l4_min = np.float32(ds_vel.min())
+
+    else:
+        l4_max = np.float32(ds_nrt.max())
+        l4_min = np.float32(ds_nrt.min())
 
     max_vals_l4.append(l4_max)
     min_vals_l4.append(l4_min)
@@ -189,6 +201,14 @@ def get_min_max(ds_nrt, sat_dic, swot, product):
 
         vmax_l4 = max(max_vals_l4)
         vmin_l4 = min(min_vals_l4)
+
+        if product == 'vgos' or product == 'ugos':
+            abs_max = max(abs(vmax_l4), abs(vmin_l4))
+            vmax_l4 = abs_max
+            vmin_l4 = -abs_max
+
+        if product == 'velocity':
+            vmin_l4 = 0
 
         if sat_dic or swot:
             vmax_l3 = max(max_vals_l3 + max_vals_l3_swot)

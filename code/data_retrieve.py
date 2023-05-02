@@ -3,6 +3,7 @@ import ftplib
 from ftplib import FTP
 import xarray as xr
 import utils
+import numpy as np
 
 
 def download_nrt(username,
@@ -37,7 +38,7 @@ def download_nrt(username,
     if isinstance(day, int):
         day = f"{day:02d}"
 
-    if product == 'altimetry':
+    if product == 'altimetry' or product == 'ugos' or product == 'vgos' or product == 'velocity':
         print('Retrieving Altimetric L4-NRT data for {}-{}-{}...'.format(year, month, day))
         service_id = 'SEALEVEL_EUR_PHY_L4_NRT_OBSERVATIONS_008_060'
         product_id = 'dataset-duacs-nrt-europe-merged-allsat-phy-l4'
@@ -117,6 +118,20 @@ def download_nrt(username,
 
             elif product == 'altimetry':
                 ds = ds['adt']
+                ds = ds.isel(time=0)
+
+            elif product == 'ugos':
+                ds = ds['ugos']*100
+                ds = ds.isel(time=0)
+
+            elif product == 'vgos':
+                ds = ds['vgos']*100
+                ds = ds.isel(time=0)
+
+            elif product == 'velocity':
+                selected_vars = ["vgos",
+                                 "ugos"]
+                #ds = np.sqrt((ds['vgos']*100)**2 + (ds['ugos']*100)**2)
                 ds = ds.isel(time=0)
 
             elif product == 'wind':
@@ -218,7 +233,7 @@ def download_along_track(username,
     return datasets
 
 
-def download_along_track_swot(day,
+def download_along_track_swot(month, day,
                               coords,
                               out_fold='../temp/swot_l3/'):
     
@@ -250,6 +265,7 @@ def download_along_track_swot(day,
                 ftp.retrbinary('RETR ' + filename, file.write)
 
     ds =  xr.open_mfdataset(out_fold+'*.nc')
+    ds = ds.sel(time=ds.time.dt.month.isin([int(month)]))
     ds = ds.sel(time=ds.time.dt.day.isin([int(day)]))
     ds = ds.where((ds.longitude > coords[0]) &
                     (ds.longitude < coords[1]) &
@@ -269,7 +285,7 @@ def get_data(username, password, year, month, day, coords, product):
 
     # Download L4, L3 and SWOT-nadir data all at once into a temporary file
 
-    swot = download_along_track_swot(day, coords)
+    swot = download_along_track_swot(month, day, coords)
     ds_nrt = download_nrt(username, password, year,
                           month, day, coords, product)
     sat_dic = download_along_track(

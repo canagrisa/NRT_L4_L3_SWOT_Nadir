@@ -92,18 +92,48 @@ def plot_L4_field(datarray, ax, fig_size, cmap, vmin, vmax, product):
 
     fs = np.sqrt(fig_size)
 
-    if product == 'altimetry' or product == 'wind':
-        nrt_l4 = datarray.plot.contourf(ax=ax,
-                                        add_colorbar=False,
-                                        cmap=cmap,
-                                        transform=ccrs.PlateCarree(),
-                                        linewidths=0.2*fs,
-                                        vmax=vmax,
-                                        vmin=vmin,
-                                        levels=15,
-                                        algorithm='mpl2005',
-                                        zorder=-3)
+    if product == 'altimetry' or product == 'wind' or product == 'ugos' or product == 'vgos' or product == 'velocity':
 
+        if product == 'velocity':
+            nrt_l4 =np.sqrt((datarray['ugosa']*100)**2 +  (datarray['vgosa']*100)**2).plot.contourf(ax=ax,
+                                            add_colorbar=False,
+                                            cmap=cmap,
+                                            transform=ccrs.PlateCarree(),
+                                            linewidths=0.2*fs,
+                                            vmax=vmax,
+                                            vmin=vmin,
+                                            levels=15,
+                                            algorithm='mpl2005',
+                                            zorder=-3)
+
+            q = datarray.plot.quiver(x='longitude', y='latitude', u='ugos', v='vgos', 
+                                 ax=ax, transform=ccrs.PlateCarree(), zorder=3, 
+                                 color = 'black',add_guide=False,)
+                
+            i = 0
+            for value in [0.1, 0.2, 0.3]:
+
+                qk = plt.quiverkey(q, 1.04, 0.46+i/30, value,
+                                r'{:0.0f} cm s$^{{-1}}$'.format(value*100),
+                                angle=45,
+                                labelpos='W',
+                                color='k',
+                                fontproperties={'size': 1.2*fs},
+                                coordinates='figure')
+                i += 1
+
+
+        else:
+            nrt_l4 = datarray.plot.contourf(ax=ax,
+                                            add_colorbar=False,
+                                            cmap=cmap,
+                                            transform=ccrs.PlateCarree(),
+                                            linewidths=0.2*fs,
+                                            vmax=vmax,
+                                            vmin=vmin,
+                                            levels=15,
+                                            algorithm='mpl2005',
+                                            zorder=-3)
 
     else:
 
@@ -114,11 +144,10 @@ def plot_L4_field(datarray, ax, fig_size, cmap, vmin, vmax, product):
                                 transform=ccrs.PlateCarree(),
                                 zorder=-3)
 
+
     return nrt_l4
 
     
-
-
 def plot_swot_orbit(ax, fig_size, lw=0.195, c='k', alpha=1):
 
     # Plot the SWOT orbit
@@ -245,8 +274,10 @@ def plot_path(ds,
 
     angle = np.arctan(dy/dx)
 
-    ax.arrow(x[-1]+0.02*fs*dx/norm,
-             y[-1]+0.02*fs*dy/norm,
+    scale = 0.02*fs
+
+    ax.arrow(x[-1]+scale*dx/norm,
+             y[-1]+scale*dy/norm,
              dx,
              dy,
              width=0.00005*fs,
@@ -257,7 +288,11 @@ def plot_path(ds,
              transform=ccrs.PlateCarree()
              )
 
+
     if plot_geov:
+
+        scale = 4
+
         q = ds.plot.quiver(x='longitude',
                            y='latitude',
                            u='geovx',
@@ -270,7 +305,7 @@ def plot_path(ds,
                            headaxislength=2,
                            headwidth=1.9,
                            lw=0.05*fs,
-                           scale=5,
+                           scale=scale,
                            zorder=4,
                            add_guide=False,
                            transform=ccrs.PlateCarree())
@@ -278,13 +313,15 @@ def plot_path(ds,
         value = 0.1
 
         i = 0
-        for value in [0.1, 0.25, 0.5]:
+        for value in [0.1, 0.2, 0.3]:
 
             qk = plt.quiverkey(q, 1.04, 0.31+i/30, value,
                                r'{:0.0f} cm s$^{{-1}}$'.format(value*100),
                                angle=45,
                                labelpos='W',
-                               color='k',
+                               lw=0.05*fs,
+                               ec='k',
+                               color=c,
                                fontproperties={'size': 1.2*fs},
                                coordinates='figure')
             i += 1
@@ -475,6 +512,27 @@ def get_map(ds_nrt, swot, sat_dic,
         cmap_l4 = cmocean.cm.haline
         arrow_color = 'r'
 
+    elif product == 'ugos':
+        title = 'Zonal velocity and along track ADT and \u22A5 geostrophic velocities'
+        cbar_label = 'UGOS (cm/s)'
+        cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
+        cmap_l4 = cmocean.cm.balance
+        arrow_color = 'fuchsia'
+
+    elif product == 'vgos':
+        title = 'Meridional velocity and along track ADT and \u22A5 geostrophic velocities'
+        cbar_label = 'VGOS (cm/s)'
+        cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
+        cmap_l4 = cmocean.cm.balance
+        arrow_color = 'fuchsia'
+
+    elif product == 'velocity':
+        title = 'Magnitude of geostrophic velocity and along track ADT and \u22A5 geostrophic velocities'
+        cbar_label = 'Magnitude geostrophic velocity (cm/s)'
+        cmap_l3 = cmr.get_sub_cmap('jet', 0, 1)
+        cmap_l4 = cmocean.cm.dense
+        arrow_color = 'r'
+
     # elif product == 'wind':
     #     #ds_nrt  = ds_nrt['stress_curl']
     #     title = 'Stress wind and along track ADT and \u22A5 geostrophic velocities'
@@ -514,7 +572,7 @@ def get_map(ds_nrt, swot, sat_dic,
 
     plot_cbar(im_l4,
               fig, ax, fig_size,
-              label=cbar_label, location='bottom', extend='neither')
+              label=cbar_label, location='bottom', extend='both')
 
     ax.set_title(title,
                  fontsize=1.5*fs)
